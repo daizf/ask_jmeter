@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jmeter-server
+  labels:
+    app: jmeter-server
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: jmeter-server
+  template:
+    metadata:
+      labels:
+        app: jmeter-server
+    spec:
+      containers:
+      - name: jmeter-server
+        image: registry-vpc.cn-beijing.aliyuncs.com/eci_open/jmeter-server:5.4.2
+        ports:
+          - name: rmi-port
+            containerPort: 60001
+          - name: server-port
+            containerPort: 1099
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jmeter-server-headless
+spec:
+  clusterIP: None              #这使得服务成为headless
+  ports:
+  - port: 1099
+    targetPort: 1099
+  selector:
+    app: jmeter-server
