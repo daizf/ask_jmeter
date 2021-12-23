@@ -1,0 +1,31 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jmeter-cluster-hpa
+spec:
+  template:
+    metadata:
+      name: jmeter-cluster-hpa
+      labels:
+        app: client
+    spec:
+      restartPolicy: OnFailure 
+      containers:
+      - name: jmeter
+        image: registry-vpc.cn-beijing.aliyuncs.com/eci_open/jmeter:5.4.2
+        command: ["jmeter","-n","-t","/data/nginx.jmx","-Jserver.rmi.ssl.disable=true","-R","127.0.0.1"]
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","./bin/stoptest.sh"]
+        volumeMounts:
+        - name: config
+          mountPath: "/data/"
+          readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: test-plan-hpa
+            items:
+            - key: "nginx-hpa"
+              path: "nginx.jmx"

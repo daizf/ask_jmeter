@@ -5,7 +5,7 @@ metadata:
   labels:
     app: jmeter-server
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: jmeter-server
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: jmeter-server
-        image: registry-vpc.cn-beijing.aliyuncs.com/eci_open/jmeter-server:5.4.2
+        image: registry-vpc.cn-beijing.aliyuncs.com/eci_open/jmeter:5.4.2
         ports:
           - name: rmi-port
             containerPort: 60001

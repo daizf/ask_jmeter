@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: jmeter-standalone-nas
+spec:
+  template:
+    metadata:
+      name: jmeter-standalone-nas
+      labels:
+        app: client
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: jmeter
+        image: registry-vpc.cn-beijing.aliyuncs.com/eci_open/jmeter:5.4.2
+        command: ["jmeter","-n","-t","/data/nginx.jmx","-l","/result/nginx/$(UID).jtl","-e","-o","/result/nginx/$(UID)","-Jserver.rmi.ssl.disable=true","-R","127.0.0.1"]
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","./bin/stoptest.sh"]
+        env:
+        - name: UID
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.uid
+        volumeMounts:
+        - name: config
+          mountPath: "/data/"
+          readOnly: true
+        - name: result-volume
+          mountPath: "/result"
+          subPath: jmeter/result   #NFS中的子目录
+      volumes:
+        - name: config
+          configMap:
+            name: test-plan
+            items:
+            - key: "nginx"
+              path: "nginx.jmx"
+        - name: result-volume
+          nfs:
+            server: 1fe5c4aa7d-****.cn-beijing.nas.aliyuncs.com  #NFS挂载点
+            path: /
+            readOnly: false

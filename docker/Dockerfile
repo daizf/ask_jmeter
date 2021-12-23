@@ -24,5 +24,9 @@ RUN mkdir -p /tmp/dependencies  \
 # Set global PATH such that "jmeter" command is found
 ENV PATH $PATH:$JMETER_HOME/bin
 WORKDIR    $JMETER_HOME
-RUN sed 's/#server.rmi.ssl.disable=false/server.rmi.ssl.disable=true/g' ./bin/jmeter.properties > ./bin/jmeter_temp.properties
-RUN mv ./bin/jmeter_temp.properties ./bin/jmeter.properties
+
+EXPOSE 1099 60001
+
+COPY docker-entrypoint.sh /
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["jmeter-server", "-Dserver.rmi.localport=60001", "-Dserver_port=1099"]

@@ -20,7 +20,10 @@ spec:
         ports:
           - name: web-port
             containerPort: 80
-
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1"
 
 ---
 apiVersion: v1

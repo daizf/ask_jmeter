@@ -1,0 +1,48 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: jmeter-client-oss
+spec:
+  schedule: "*/3 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: client
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: jmeter
+            image: registry-vpc.cn-beijing.aliyuncs.com/eci_open/jmeter:5.4.2
+            command: ["jmeter","-n","-t","/data/nginx.jmx","-l","/jmeter/$(UID).jtl","-e","-o","/jmeter/$(UID)","-Jserver.rmi.ssl.disable=true","-R","127.0.0.1"]
+            lifecycle:
+              preStop:
+                exec:
+                  command: ["/bin/sh","-c","./bin/stoptest.sh"]
+            env:
+            - name: UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            volumeMounts:
+            - name: config
+              mountPath: "/data/"
+              readOnly: true
+            - name: result-volume
+              mountPath: "/jmeter"
+          volumes:
+            - name: config
+              configMap:
+                name: test-plan
+                items:
+                - key: "nginx"
+                  path: "nginx.jmx"
+            - name: "result-volume"
+              flexVolume:
+                driver: "alicloud/oss"
+                options:
+                  bucket: "jmeter-result"
+                  url: "oss-cn-beijing-internal.aliyuncs.com"
+                  otherOpts: "-o max_stat_cache_size=0 -o allow_other"
+                  ramRole: "EciOssRoleShare"
